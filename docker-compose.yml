@@ -1,0 +1,31 @@
+version: '3'
+services:
+  main:
+    build: .
+    image: secretupdater
+    env_file: ./dev_secretupdater.env
+    # links:
+    #   - confidant
+    ports:
+      - "5050:5050"
+#   confidant:
+#     image: ffxblue/confidant:light2
+#     ports:
+#      - "80:80"
+#     links:
+#      - redis
+#      - dynamo
+#     env_file: ./dev_confidant.env
+#   redis:
+#     ports:
+#       - "6379"
+#     image: redis
+#   dynamo:
+#     volumes:
+#       - dynamo:/mnt/dynamo:rw,Z
+#     image: tray/dynamodb-local
+#     ports:
+#       - "7777:7777"
+#     command: -port 7777 -dbPath /mnt/dynamo
+# volumes:
+#   dynamo:

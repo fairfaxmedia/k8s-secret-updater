@@ -1,0 +1,5 @@
+Flask==1.0.2
+Flask-BasicAuth==0.2.0
+confidant-client==1.7.1
+pykube==0.15.0
+Flask-Limiter==1.0.1
