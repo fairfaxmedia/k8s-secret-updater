@@ -44,7 +44,7 @@ def internal_healthcheck():
 
 
 @app.route('/v1/update', methods=['POST'])
-@LIMITER.limit("1/minute", get_services_from_body)
+@LIMITER.limit("12/minute", get_services_from_body)
 @basic_auth.required
 def receive_webhook():
     '''
