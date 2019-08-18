@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from secretupdater import app
+import re
 import pykube
 import datetime
 import hashlib
@@ -135,24 +136,34 @@ def process(event):
                 try:
                     kube_connection = pykube.HTTPClient(pykube.KubeConfig(config))
                     for entry in secret_collection:
+
                         if 'secret-name' in entry.get('metadata'):
                             secret_name = entry.get('metadata').get('secret-name')
                         else:
                             secret_name = entry.get('name')
+
                         if 'secret-type' in entry.get('metadata'):
                             secret_type = entry.get('metadata').get('secret-type')
                         else:
                             secret_type = 'Opaque'
+
+                        secret_pairs = entry.get('credential_pairs')
+
                         if 'secret-case' in entry.get('metadata'):
                             upper_case_creds = entry.get('metadata').get('secret-case').split()
-                            secret_pairs = entry.get('credential_pairs')
                             for k in secret_pairs:
                                 if k in upper_case_creds:
                                     v = secret_pairs[k]
                                     secret_pairs.pop(k)
                                     secret_pairs[k.upper()] = v
-                        else:
-                            secret_pairs = entry.get('credential_pairs')
+
+                        if 'secret-case-regex' in entry.get('metadata'):
+                            upper_case_regex = entry.get('metadata').get('secret-case-regex').split("\n")
+                            for r in upper_case_regex:
+                                matching = list(filter(lambda x: re.search(r, x), secret_pairs))
+                                for k in matching:
+                                    secret_pairs[k.upper()] = secret_pairs[k]
+                                    secret_pairs.pop(k)
 
                         for k, v in secret_pairs.items():
                             if v.lower().startswith("base64:"):
