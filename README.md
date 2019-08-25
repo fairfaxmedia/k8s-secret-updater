@@ -10,9 +10,22 @@ It receives a webhook from Confidant upon changes to credentials or services, an
 
 ### Confidant
 
-You may specify `secret-name` in a credential's metadata section, to have the Secret name custom defined to be the value you select.
+#### `secret-name`
 
+You may specify `secret-name` in a credential's metadata section, to have the Secret name custom defined to be the value you select.
 This is useful if your helm chart defines the expected secret name based on the chart name, but you have several apps using the chart, or different environments needing different Credential values in the same-named Secret.
+
+#### `secret-type`
+
+You may specify `secret-type` in a credential's metadata section to override the Secret's type from the default "Opaque".
+
+#### `secret-case`
+
+You may specify `secret-case` in a credential's metadata section to change the secret key name from lower to upper-case. `secret-case` is whitespace (space or newline) seperated.
+
+#### `secret-case-regex`
+
+You may specify `secret-case-regex` in a credential's metadata section to change any secret keys matching a specified regex to upper case. `secret-case-regex` is newline separated.
 
 ### Kubernetes
 
