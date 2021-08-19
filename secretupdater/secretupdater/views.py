@@ -16,8 +16,6 @@ import json
 from flask import request
 from flask import jsonify
 
-from flask_limiter import Limiter
-
 from secretupdater import app
 from secretupdater import basic_auth
 from secretupdater.models import process
@@ -30,11 +28,6 @@ def get_services_from_body():
     return json.dumps(event)
 
 
-LIMITER = Limiter(app, key_func=get_services_from_body, headers_enabled=True)
-for handler in app.logger.handlers:
-    LIMITER.logger.addHandler(handler)
-
-
 @app.route('/internal/health', methods=['GET'])
 def internal_healthcheck():
     '''
@@ -44,7 +37,6 @@ def internal_healthcheck():
 
 
 @app.route('/v1/update', methods=['POST'])
-@LIMITER.limit("1/minute", get_services_from_body)
 @basic_auth.required
 def receive_webhook():
     '''
