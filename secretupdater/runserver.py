@@ -17,8 +17,9 @@
 
 from secretupdater import app
 
-PORT = app.config.get('PORT') or 5000
-HOST = app.config.get('HOST') or '127.0.0.1'
+# See secretupdater/secretupdater/config.py for defaults
+PORT = app.config.get('PORT') or 8080
+HOST = app.config.get('HOST') or '0.0.0.0'
 DEBUG = app.config.get('DEBUG') or False
 
 app.run(host=HOST, port=PORT, debug=DEBUG)
