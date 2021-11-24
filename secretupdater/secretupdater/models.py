@@ -18,7 +18,8 @@ import pykube
 import datetime
 import hashlib
 import base64
-
+import subprocess as sp 
+import json
 # silence some warnings:
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -81,6 +82,7 @@ def process(event):
             for config in k8s_auth:
                 app.logger.debug({"config": config})
                 try:
+
                     kube_connection = pykube.HTTPClient(pykube.KubeConfig(config))
 
                     for k8s_secret in secrets.values():
@@ -288,6 +290,54 @@ def _get_k8s_auth(credentials):
                     }
                 ],
             }
+        elif _get_credential(kube, 'eks-certificate-authority-data'):
+            app.logger.debug("%s: Found EKS CA data" % (id))
+            try:
+                eks_cluster_id = re.sub(r'[^a-zA-Z0-9\s\-]', '', kube.get('metadata').get('eks-cluster-id'))
+                eks_endpoint = kube.get('metadata').get('endpoint')
+                eks_assume_role_arn = re.sub(r'[^a-zA-Z0-9\s\-\:\/]', '', kube.get('metadata').get('eks-assume-role-arn'))
+                eks_output = sp.getoutput(f"aws eks get-token --cluster-name {eks_cluster_id} --role {eks_assume_role_arn}")
+                app.logger.debug(eks_output)
+            except TypeError:
+                raise ClusterAttributeError("Cluster credential or metadata misconfigured or not found")
+
+            try: 
+                json_token = json.loads(eks_output)
+                token_data = dict(filter(lambda x: "status" in x , json_token.items()))
+                token = token_data['status']['token']
+                app.logger.debug(token)
+            except ValueError:
+                raise BadEKSToken("Unable to obtain a valid token aws-cli")
+
+            config = {
+                "clusters": [
+                    {
+                        "name": eks_cluster_id,
+                        "cluster": {
+                            "server": eks_endpoint,
+                            "certificate-authority-data": _get_credential(kube, 'eks-certificate-authority-data'),
+                        },
+                    },
+                ],
+                "contexts": [
+                    {
+                        "name": eks_cluster_id,
+                        "context": {
+                            "cluster": eks_cluster_id,
+                            "user": "admin"
+                        },
+                    }
+                ],
+                "current-context": eks_cluster_id,
+                "users": [
+                    {
+                        "name": "admin",
+                        "user": {
+                            "token": token 
+                         },
+                     },
+                ],
+            }
         elif _get_credential(kube, 'token'):
             app.logger.debug("%s: Kubernetes token provided" % (id))
             config = {
@@ -373,3 +423,9 @@ class KuberentesConnectionError(KuberentesError):
 
 class BadSecretFormat(Exception):
     pass
+
+class BadEKSToken(Exception):
+    pass
+
+class ClusterAttributeError(Exception):
+    pass 
