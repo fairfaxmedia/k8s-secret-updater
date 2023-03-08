@@ -166,7 +166,10 @@ def _setup_confidant_client(service):
             "from": service
         },
         region=app.config.get('CONFIDANT_SERVER_AWS_REGION'),
-        token_cache_file='/tmp/confidant_token'
+        token_cache_file='/tmp/confidant_token',
+        backoff=app.config.get('CONFIDANT_REQUEST_BACKOFF'),
+        timeout=app.config.get('CONFIDANT_REQUEST_TIMEOUT'),
+        retries=app.config.get('CONFIDANT_REQUEST_RETRIES')
     )
     app.logger.debug(client.config)
     return client

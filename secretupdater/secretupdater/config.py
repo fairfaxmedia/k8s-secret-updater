@@ -72,3 +72,8 @@ class Config():
         'CONFIDANT_SERVER_AUTH_KEY', 'auth-key')
     CONFIDANT_SERVER_AWS_REGION = str_env(
         'CONFIDANT_SERVER_AWS_REGION', 'ap-southeast-2')
+
+    # Request / libURL3 Helper
+    REQUEST_BACKOFF = int_env('CONFIDANT_REQUEST_BACKOFF', 1)
+    REQUEST_TIMEOUT = int_env('CONFIDANT_REQUEST_TIMEOUT', 5)
+    REQUEST_RETRIES = int_env('CONFIDANT_REQUEST_RETRIES', 0)
