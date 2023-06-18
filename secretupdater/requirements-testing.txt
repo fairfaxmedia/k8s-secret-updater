@@ -1,2 +1,2 @@
-pylama==7.6.6
+pylama==7.7.1
 eradicate
