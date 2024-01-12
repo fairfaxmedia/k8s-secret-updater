@@ -18,7 +18,7 @@ import pykube
 import datetime
 import hashlib
 import base64
-import subprocess as sp 
+import subprocess as sp
 import json
 # silence some warnings:
 import requests
@@ -304,9 +304,9 @@ def _get_k8s_auth(credentials):
             except TypeError:
                 raise ClusterAttributeError("Cluster credential or metadata misconfigured or not found")
 
-            try: 
+            try:
                 json_token = json.loads(eks_output)
-                token_data = dict(filter(lambda x: "status" in x , json_token.items()))
+                token_data = dict(filter(lambda x: "status" in x, json_token.items()))
                 token = token_data['status']['token']
                 app.logger.debug(token)
             except ValueError:
@@ -336,9 +336,9 @@ def _get_k8s_auth(credentials):
                     {
                         "name": "admin",
                         "user": {
-                            "token": token 
-                         },
-                     },
+                            "token": token
+                        },
+                    },
                 ],
             }
         elif _get_credential(kube, 'token'):
@@ -427,8 +427,10 @@ class KuberentesConnectionError(KuberentesError):
 class BadSecretFormat(Exception):
     pass
 
+
 class BadEKSToken(Exception):
     pass
 
+
 class ClusterAttributeError(Exception):
-    pass 
+    pass
