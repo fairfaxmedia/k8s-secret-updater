@@ -1,0 +1,32 @@
+name: Security check - Bandit
+
+on: push
+
+jobs:
+  build:
+    name: Python ${{ matrix.python-version }} ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Security check - Bandit
+        uses: ./
+        with:
+          ignore_failure: true
+          project_path: .
+          python_version: ${{ matrix.python-version }}
+
+      - name: Security check report artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Security report
+          path: output/security_report.txt
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        python-version:
+          - 3.6.10
+
