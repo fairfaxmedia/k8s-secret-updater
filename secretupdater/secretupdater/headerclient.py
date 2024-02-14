@@ -21,6 +21,7 @@ class HeaderClient():
     def __init__(self, **_kwargs):
         super(HeaderClient, self).__init__()
         app.logger.debug("Initialising HeaderClient")
+        self.config = {}
 
     def get_service(self, service):
         app.logger.debug("DummyClient.get_service")
