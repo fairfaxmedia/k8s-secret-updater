@@ -1,4 +1,4 @@
-Flask==2.0.3
+Flask==2.3.3
 Flask-BasicAuth==0.2.0
 confidant-client==2.1.0
 pykube-ng==20.10.0
