@@ -178,6 +178,11 @@ def _setup_confidant_client(service):
 def _parse_secret_collection(secret_collection, namespace):
     secrets = {}
 
+    # if the metadata 'secret-merge-priority' is set, then we can sort the
+    # collection on that, which means higher "priority" entries will
+    # override/replace if the secret key is the same.
+    secret_collection.sort(key=lambda element: element.get('metadata', {}).get("secret-merge-priority", ""))
+
     for entry in secret_collection:
         secret = _parse_secret_entry(entry, namespace)
 
@@ -187,7 +192,12 @@ def _parse_secret_collection(secret_collection, namespace):
             continue
 
         name = secret['metadata']['name']
-        secrets[name] = secret
+
+        # If we've got two entries to create the same secret, merge the data.
+        if name in secrets:
+            secrets[name]["data"] = {**secrets[name]["data"], **secret["data"]}
+        else:
+            secrets[name] = secret
 
     return secrets
 
