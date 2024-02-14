@@ -77,7 +77,14 @@ def process(event):
             # Create a hashed value, to see if the data has changed.
             hashedval = hashlib.md5(str(repr(credentials)).encode('utf-8')).hexdigest()
 
-            k8s_auth = _get_k8s_auth(credentials=credentials)
+            try:
+                k8s_auth = _get_k8s_auth(credentials=credentials)
+            except BadEKSToken:
+                app.logger.error("unable to get EKS token for '{}'".format(credentials))
+                continue
+            except ClusterAttributeError:
+                app.logger.error("error with cluster attributes for '{}'".format(credentials))
+                continue
 
             for config in k8s_auth:
                 app.logger.debug({"config": config})
