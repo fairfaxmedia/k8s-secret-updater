@@ -1,8 +1,8 @@
-FROM python:3-alpine3.8 AS base
+FROM python:3.11-alpine3.19 AS base
 FROM base AS builder
 
 WORKDIR /srv
-RUN apk add --no-cache --update alpine-sdk~=1.0 libffi~=3.2 libffi-dev~=3.2 openssl-dev~=1.0
+RUN apk add --no-cache --update alpine-sdk~=1.0 libffi~=3 libffi-dev~=3 openssl-dev~=3
 COPY ./secretupdater/requirements.txt .
 RUN pip install --prefix=/srv --requirement ./requirements.txt
 
