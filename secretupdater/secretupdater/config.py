@@ -15,7 +15,7 @@
 from os import getenv
 
 
-def bool_env(var_name, default=False):
+def bool_env(var_name: str, default: bool = False) -> bool:
     """
     Get an environment variable coerced to a boolean value.
     """
@@ -27,21 +27,21 @@ def bool_env(var_name, default=False):
     return bool(test_val)
 
 
-def float_env(var_name, default=0.0):
+def float_env(var_name: str, default: float = 0.0) -> float:
     """
     Get an environment variable coerced to a float value.
     """
     return float(getenv(var_name, default))
 
 
-def int_env(var_name, default=0):
+def int_env(var_name: str, default: int = 0) -> int:
     """
     Get an environment variable coerced to an integer value.
     """
     return int(getenv(var_name, default))
 
 
-def str_env(var_name, default=''):
+def str_env(var_name: str, default: str = '') -> str:
     """
     Get an environment variable as a string.
     """

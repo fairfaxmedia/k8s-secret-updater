@@ -35,7 +35,7 @@ else:
 
 
 def process(event):
-    affected_services = event.get('services') or []
+    affected_services: list = event.get('services') or []
     errors = []
     result_code = 200
 
@@ -111,7 +111,7 @@ def process(event):
     return {'code': result_code, 'errors': errors}
 
 
-def _trigger_deployment(kube_connection, namespace, timestamp=datetime.datetime.utcnow(), checksum=None):
+def _trigger_deployment(kube_connection, namespace: str, timestamp: datetime = datetime.datetime.utcnow(), checksum=None) -> None:
     res = pykube.Deployment.objects(kube_connection).filter(namespace=namespace).all()
 
     response = {"items": []}
@@ -140,13 +140,13 @@ def _trigger_deployment(kube_connection, namespace, timestamp=datetime.datetime.
         app.logger.debug(deployment['spec']['template']['metadata'])
 
 
-def _service_to_namespace(service_name):
+def _service_to_namespace(service_name: str) -> str:
     if service_name.startswith('k8s-') and not service_name.startswith('k8s-cluster-'):
         return service_name[4:]
     return service_name
 
 
-def _get_credential(credential_list, credential_name):
+def _get_credential(credential_list: dict[str: str], credential_name: str) -> str | None:
     if credential_name in credential_list.get('credential_pairs').keys():
         return credential_list.get('credential_pairs')[credential_name]
     return None
@@ -175,8 +175,8 @@ def _setup_confidant_client(service):
     return client
 
 
-def _parse_secret_collection(secret_collection, namespace):
-    secrets = {}
+def _parse_secret_collection(secret_collection, namespace: str):
+    secrets: dict[str, any] = {}
 
     for entry in secret_collection:
         secret = _parse_secret_entry(entry, namespace)
@@ -192,7 +192,7 @@ def _parse_secret_collection(secret_collection, namespace):
     return secrets
 
 
-def _parse_secret_entry(entry, namespace):
+def _parse_secret_entry(entry, namespace: str):
     if 'secret-name' in entry.get('metadata'):
         secret_name = entry.get('metadata').get('secret-name')
     else:

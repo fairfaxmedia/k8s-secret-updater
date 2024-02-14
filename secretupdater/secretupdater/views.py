@@ -15,6 +15,7 @@
 import json
 from flask import request
 from flask import jsonify
+from requests import Response
 
 from secretupdater import app
 from secretupdater import basic_auth
@@ -38,7 +39,7 @@ def internal_healthcheck():
 
 @app.route('/v1/update', methods=['POST'])
 @basic_auth.required
-def receive_webhook():
+def receive_webhook() -> tuple[Response, int]:
     '''
     Receive the update notification from the webhook
     The arriving event should be in the format:
@@ -60,7 +61,7 @@ def receive_webhook():
             'credential_update',
             'blind_credential_update'
     ]:
-        result = process(event)
+        result: dict[str, int] = process(event)
         app.logger.debug(result)
 
         if result['errors']:
