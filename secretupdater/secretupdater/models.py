@@ -277,154 +277,174 @@ def _get_k8s_auth(credentials):
 
     for kube in k8s_clusters:
         id = kube.get('id')
+
         if _get_credential(kube, 'certificate-authority-data'):  # Assuming that if we are given the k8s CA, we're using certs
             app.logger.debug("%s: Found CA data, assuming we're using x509 for auth" % (id))
-            config = {
-                "clusters": [
-                    {
-                        "name": id,
-                        "cluster": {
-                            "server": kube.get('metadata').get('endpoint'),
-                            "certificate-authority-data": _get_credential(kube, 'certificate-authority-data'),
-                        },
-                    },
-                ],
-                "contexts": [
-                    {
-                        "name": id,
-                        "context": {
-                            "cluster": id,
-                            "user": "admin"
-                        },
-                    }
-                ],
-                "current-context": id,
-                "users": [
-                    {
-                        "name": "admin",
-                        "user": {
-                            "username": _get_credential(kube, 'username'),
-                            "client-certificate-data": _get_credential(kube, 'client-certificate-data'),
-                            "client-key-data": _get_credential(kube, 'client-key-data'),
-                        },
-                    }
-                ],
-            }
+            config = _get_k8s_auth_ca(kube)
+
         elif _get_credential(kube, 'eks-certificate-authority-data'):
             app.logger.debug("%s: Found EKS CA data" % (id))
-            try:
-                eks_cluster_id = re.sub(r'[^a-zA-Z0-9\s\-]', '', kube.get('metadata').get('eks-cluster-id'))
-                eks_endpoint = kube.get('metadata').get('endpoint')
-                eks_assume_role_arn = re.sub(r'[^a-zA-Z0-9\s\-\:\/]', '', kube.get('metadata').get('eks-assume-role-arn'))
-                eks_output = sp.getoutput(f"aws eks get-token --cluster-name {eks_cluster_id} --role {eks_assume_role_arn}")
-                app.logger.debug(eks_output)
-            except TypeError:
-                raise ClusterAttributeError("Cluster credential or metadata misconfigured or not found")
+            config = _get_k8s_auth_eks(kube)
 
-            try:
-                json_token = json.loads(eks_output)
-                token_data = dict(filter(lambda x: "status" in x, json_token.items()))
-                token = token_data['status']['token']
-                app.logger.debug(token)
-            except ValueError:
-                raise BadEKSToken("Unable to obtain a valid token aws-cli")
-
-            config = {
-                "clusters": [
-                    {
-                        "name": eks_cluster_id,
-                        "cluster": {
-                            "server": eks_endpoint,
-                            "certificate-authority-data": _get_credential(kube, 'eks-certificate-authority-data'),
-                        },
-                    },
-                ],
-                "contexts": [
-                    {
-                        "name": eks_cluster_id,
-                        "context": {
-                            "cluster": eks_cluster_id,
-                            "user": "admin"
-                        },
-                    }
-                ],
-                "current-context": eks_cluster_id,
-                "users": [
-                    {
-                        "name": "admin",
-                        "user": {
-                            "token": token
-                        },
-                    },
-                ],
-            }
         elif _get_credential(kube, 'token'):
             app.logger.debug("%s: Kubernetes token provided" % (id))
-            config = {
-                "clusters": [
-                    {
-                        "name": id,
-                        "cluster": {
-                            "server": kube.get('metadata').get('endpoint'),
-                            "insecure-skip-tls-verify": True
-                        },
-                    },
-                ],
-                "contexts": [
-                    {
-                        "name": id,
-                        "context": {
-                            "cluster": id,
-                            "user": "admin"
-                        },
-                    }
-                ],
-                "current-context": id,
-                "users": [
-                    {
-                        "name": "admin",
-                        "user": {
-                            "token": _get_credential(kube, 'token')
-                        }
-                    }
-                ]
-            }
+            config = _get_k8s_auth_token(kube)
+
         elif _get_credential(kube, 'username'):
             app.logger.debug("%s: Kubernetes username/password provided" % (id))
-            config = {
-                "clusters": [
-                    {
-                        "name": id,
-                        "cluster": {
-                            "server": kube.get('metadata').get('endpoint'),
-                            "insecure-skip-tls-verify": True,
-                        },
-                    },
-                ],
-                "contexts": [
-                    {
-                        "name": id,
-                        "context": {
-                            "cluster": id,
-                            "user": "admin"
-                        },
-                    }
-                ],
-                "current-context": id,
-                "users": [
-                    {
-                        "name": "admin",
-                        "user": {
-                            "username": _get_credential(kube, 'username'),
-                            "password": _get_credential(kube, 'password'),
-                        },
-                    }
-                ],
-            }
+            config = _get_k8s_auth_userpass(kube)
 
         k8s_auth.append(config)
 
     return k8s_auth
+
+
+def _get_k8s_auth_ca(kube):
+    return {
+        "clusters": [
+            {
+                "name": id,
+                "cluster": {
+                    "server": kube.get('metadata').get('endpoint'),
+                    "certificate-authority-data": _get_credential(kube, 'certificate-authority-data'),
+                },
+            },
+        ],
+        "contexts": [
+            {
+                "name": id,
+                "context": {
+                    "cluster": id,
+                    "user": "admin"
+                },
+            }
+        ],
+        "current-context": id,
+        "users": [
+            {
+                "name": "admin",
+                "user": {
+                    "username": _get_credential(kube, 'username'),
+                    "client-certificate-data": _get_credential(kube, 'client-certificate-data'),
+                    "client-key-data": _get_credential(kube, 'client-key-data'),
+                },
+            }
+        ],
+    }
+
+
+def _get_k8s_auth_eks(kube):
+    try:
+        eks_cluster_id = re.sub(r'[^a-zA-Z0-9\s\-]', '', kube.get('metadata').get('eks-cluster-id'))
+        eks_endpoint = kube.get('metadata').get('endpoint')
+        eks_assume_role_arn = re.sub(r'[^a-zA-Z0-9\s\-\:\/]', '', kube.get('metadata').get('eks-assume-role-arn'))
+        eks_output = sp.getoutput(f"aws eks get-token --cluster-name {eks_cluster_id} --role {eks_assume_role_arn}")
+        app.logger.debug(eks_output)
+    except TypeError:
+        raise ClusterAttributeError("Cluster credential or metadata misconfigured or not found")
+
+    try:
+        json_token = json.loads(eks_output)
+        token_data = dict(filter(lambda x: "status" in x, json_token.items()))
+        token = token_data['status']['token']
+        app.logger.debug(token)
+    except ValueError:
+        raise BadEKSToken("Unable to obtain a valid token aws-cli")
+
+    return {
+        "clusters": [
+            {
+                "name": eks_cluster_id,
+                "cluster": {
+                    "server": eks_endpoint,
+                    "certificate-authority-data": _get_credential(kube, 'eks-certificate-authority-data'),
+                },
+            },
+        ],
+        "contexts": [
+            {
+                "name": eks_cluster_id,
+                "context": {
+                    "cluster": eks_cluster_id,
+                    "user": "admin"
+                },
+            }
+        ],
+        "current-context": eks_cluster_id,
+        "users": [
+            {
+                "name": "admin",
+                "user": {
+                    "token": token
+                },
+            },
+        ],
+    }
+
+
+def _get_k8s_auth_token(kube):
+    return {
+        "clusters": [
+            {
+                "name": id,
+                "cluster": {
+                    "server": kube.get('metadata').get('endpoint'),
+                    "insecure-skip-tls-verify": True
+                },
+            },
+        ],
+        "contexts": [
+            {
+                "name": id,
+                "context": {
+                    "cluster": id,
+                    "user": "admin"
+                },
+            }
+        ],
+        "current-context": id,
+        "users": [
+            {
+                "name": "admin",
+                "user": {
+                    "token": _get_credential(kube, 'token')
+                }
+            }
+        ]
+    }
+
+
+def _get_k8s_auth_userpass(kube):
+    return {
+        "clusters": [
+            {
+                "name": id,
+                "cluster": {
+                    "server": kube.get('metadata').get('endpoint'),
+                    "insecure-skip-tls-verify": True,
+                },
+            },
+        ],
+        "contexts": [
+            {
+                "name": id,
+                "context": {
+                    "cluster": id,
+                    "user": "admin"
+                },
+            }
+        ],
+        "current-context": id,
+        "users": [
+            {
+                "name": "admin",
+                "user": {
+                    "username": _get_credential(kube, 'username'),
+                    "password": _get_credential(kube, 'password'),
+                },
+            }
+        ],
+    }
 
 
 class NamespaceNoDeploymentError(Exception):
