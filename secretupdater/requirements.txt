@@ -11,7 +11,7 @@ cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.4
-cryptography==42.0.2
+cryptography==42.0.4
 docutils==0.16
 idna==3.6
 itsdangerous==2.1.2
