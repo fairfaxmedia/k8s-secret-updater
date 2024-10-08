@@ -1,4 +1,4 @@
-FROM python:3.11-alpine3.19 AS base
+FROM python:3.13-alpine3.19 AS base
 FROM base AS builder
 
 WORKDIR /srv
